@@ -21,6 +21,7 @@ from .model import (
     file_mtime_iso,
     utc_now_iso,
 )
+from .passive_data_layout import GROUP_ENTITY_STREAM_LAYOUTS, coverage_with_neutral_aliases
 
 
 def git_sha() -> str:
@@ -489,16 +490,11 @@ def snapshot_artifacts(
     progress_stage_prefix: str = "pre_run_inventory",
 ) -> tuple[List[Dict[str, object]], Dict[str, object]]:
     artifacts: List[Dict[str, object]] = []
-    content_summary = {
-        "site_count": 0,
-        "participant_count": 0,
-        "stream_count": 0,
-        "file_count": 0,
-        "total_bytes": 0,
-    }
     site_summary: Dict[str, Dict[str, object]] = {}
     all_participants = set()
     all_streams = set()
+    file_count = 0
+    total_bytes = 0
 
     for index, file_path in enumerate(
         iter_dataset_files(
@@ -523,8 +519,8 @@ def snapshot_artifacts(
         participant_id = address.participant_id or ""
         stream = address.stream or ""
 
-        content_summary["file_count"] += 1
-        content_summary["total_bytes"] += size
+        file_count += 1
+        total_bytes += size
         if site:
             bucket = site_summary.setdefault(
                 site,
@@ -553,10 +549,6 @@ def snapshot_artifacts(
                 }
             )
 
-    content_summary["site_count"] = len(site_summary)
-    content_summary["participant_count"] = len(all_participants)
-    content_summary["stream_count"] = len(all_streams)
-
     rendered_sites: List[Dict[str, object]] = []
     for site in sorted(site_summary):
         bucket = site_summary[site]
@@ -573,10 +565,13 @@ def snapshot_artifacts(
         )
 
     artifacts.sort(key=lambda record: (record["logical_address_display"], record["artifact_hash"]))
-    return artifacts, {
-        "content_summary": content_summary,
-        "site_summary": rendered_sites,
-    }
+    return artifacts, coverage_with_neutral_aliases(
+        site_summary=rendered_sites,
+        participant_ids=all_participants,
+        stream_ids=all_streams,
+        file_count=file_count,
+        total_bytes=total_bytes,
+    )
 
 
 def write_streaming_artifact_inventory(
@@ -675,7 +670,7 @@ def _is_flat_file_control_part(name: str) -> bool:
 
 
 def logical_address_for_path(relative: Path, *, logical_root: Dict[str, object], layout: str) -> LogicalAddress:
-    if layout in {"passive_merged_v1", "site_participant_stream_v1"}:
+    if layout in GROUP_ENTITY_STREAM_LAYOUTS - {"raw_source_v1"}:
         parts = relative.parts
         if len(parts) < 4:
             raise ValueError(f"Expected site/participant/stream/file layout, got: {relative}")

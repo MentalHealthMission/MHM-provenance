@@ -9,6 +9,7 @@ import uuid
 
 from .manifests import build_artifact_hash, build_parent_document_refs, write_dataset_manifest_bundle
 from .model import LogicalAddress, PROVENANCE_SCHEMA_VERSION, utc_now_iso
+from .passive_data_layout import GROUP_ENTITY_STREAM_LAYOUTS, coverage_with_neutral_aliases
 
 
 def split_s3_uri(uri: str) -> tuple[str, str]:
@@ -270,7 +271,7 @@ def _full_s3_scan_prefixes(*, prefix: str, relative_prefixes: Sequence[str]) -> 
 
 def logical_address_for_source(relative_locator: str, *, logical_root: Dict[str, object], layout: str) -> LogicalAddress:
     parts = [part for part in relative_locator.split("/") if part]
-    if layout in {"raw_source_v1", "site_participant_stream_v1"} and len(parts) >= 4:
+    if layout in GROUP_ENTITY_STREAM_LAYOUTS and len(parts) >= 4:
         site, participant_id, stream = parts[0], parts[1], parts[2]
         artifact = "/".join(parts[3:])
         return LogicalAddress(
@@ -343,14 +344,10 @@ def artifacts_and_coverage(artifacts: Sequence[Dict[str, object]]) -> tuple[List
         )
 
     sorted_artifacts = sorted(artifacts, key=lambda item: (item["logical_address_display"], item["artifact_hash"]))
-    coverage = {
-        "content_summary": {
-            "site_count": len(rendered_sites),
-            "participant_count": len(participants),
-            "stream_count": len(streams),
-            "file_count": len(sorted_artifacts),
-            "total_bytes": total_bytes,
-        },
-        "site_summary": rendered_sites,
-    }
-    return sorted_artifacts, coverage
+    return sorted_artifacts, coverage_with_neutral_aliases(
+        site_summary=rendered_sites,
+        participant_ids=participants,
+        stream_ids=streams,
+        file_count=len(sorted_artifacts),
+        total_bytes=total_bytes,
+    )

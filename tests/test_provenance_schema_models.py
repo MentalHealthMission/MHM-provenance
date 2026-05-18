@@ -19,9 +19,36 @@ from connect_summary.provenance.realization import (
     realization_result_from_dict,
 )
 from connect_summary.provenance.surfaces import SurfaceDefinition, surface_definition_from_dict
+from mhm_core.provenance.model import LogicalAddress
 
 
 class ProvenanceSchemaModelTests(unittest.TestCase):
+    def test_logical_address_keeps_passive_data_aliases_explicit(self) -> None:
+        address = LogicalAddress(
+            surface="study",
+            domain="passive-data",
+            stage="merged",
+            site="Cardiff",
+            participant_id="participant-1",
+            stream="steps",
+            artifact="steps.csv.gz",
+        )
+
+        self.assertEqual(address.group, "Cardiff")
+        self.assertEqual(address.entity_id, "participant-1")
+        self.assertEqual(
+            address.to_dict(),
+            {
+                "surface": "study",
+                "domain": "passive-data",
+                "stage": "merged",
+                "site": "Cardiff",
+                "participant_id": "participant-1",
+                "stream": "steps",
+                "artifact": "steps.csv.gz",
+            },
+        )
+
     def test_concrete_path_round_trip_and_hash_stability(self) -> None:
         path = ConcretePath(
             input_nodes=[

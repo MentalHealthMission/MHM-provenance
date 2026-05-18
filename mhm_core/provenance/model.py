@@ -34,6 +34,16 @@ class LogicalAddress:
     interval_end: str = ""
     labels: Dict[str, str] = field(default_factory=dict)
 
+    @property
+    def group(self) -> str:
+        """Neutral alias for the passive-data `site` dimension."""
+        return self.site
+
+    @property
+    def entity_id(self) -> str:
+        """Neutral alias for the passive-data `participant_id` dimension."""
+        return self.participant_id
+
     def to_dict(self) -> dict[str, object]:
         payload: dict[str, object] = {
             "surface": self.surface,
