@@ -9,7 +9,12 @@ import uuid
 
 from .manifests import build_artifact_hash, build_parent_document_refs, write_dataset_manifest_bundle
 from .model import LogicalAddress, PROVENANCE_SCHEMA_VERSION, utc_now_iso
-from .passive_data_layout import GROUP_ENTITY_STREAM_LAYOUTS, coverage_with_neutral_aliases
+from .passive_data_layout import (
+    GROUP_ENTITY_STREAM_LAYOUTS,
+    coverage_with_neutral_aliases,
+    passive_logical_coordinates,
+    passive_logical_labels,
+)
 
 
 def split_s3_uri(uri: str) -> tuple[str, str]:
@@ -283,6 +288,8 @@ def logical_address_for_source(relative_locator: str, *, logical_root: Dict[str,
             participant_id=participant_id,
             stream=stream,
             artifact=artifact,
+            coordinates=passive_logical_coordinates(group=site, entity_id=participant_id, stream=stream),
+            labels=passive_logical_labels(site=site, participant_id=participant_id, stream=stream),
         )
     return LogicalAddress(
         surface=str(logical_root["surface"]),

@@ -32,17 +32,18 @@ class LogicalAddress:
     slice_name: str = ""
     interval_start: str = ""
     interval_end: str = ""
+    coordinates: Dict[str, str] = field(default_factory=dict)
     labels: Dict[str, str] = field(default_factory=dict)
 
     @property
     def group(self) -> str:
-        """Neutral alias for the passive-data `site` dimension."""
-        return self.site
+        """Neutral group dimension, with `site` retained as a compatibility alias."""
+        return self.coordinates.get("group", self.site)
 
     @property
     def entity_id(self) -> str:
-        """Neutral alias for the passive-data `participant_id` dimension."""
-        return self.participant_id
+        """Neutral entity dimension, with `participant_id` retained as a compatibility alias."""
+        return self.coordinates.get("entity_id", self.participant_id)
 
     def to_dict(self) -> dict[str, object]:
         payload: dict[str, object] = {
@@ -52,8 +53,12 @@ class LogicalAddress:
         }
         if self.site:
             payload["site"] = self.site
+        if self.group:
+            payload["group"] = self.group
         if self.participant_id:
             payload["participant_id"] = self.participant_id
+        if self.entity_id:
+            payload["entity_id"] = self.entity_id
         if self.stream:
             payload["stream"] = self.stream
         if self.artifact:
@@ -66,16 +71,18 @@ class LogicalAddress:
             payload["interval_start"] = self.interval_start
         if self.interval_end:
             payload["interval_end"] = self.interval_end
+        if self.coordinates:
+            payload["coordinates"] = dict(sorted(self.coordinates.items()))
         if self.labels:
             payload["labels"] = dict(sorted(self.labels.items()))
         return payload
 
     def display(self) -> str:
         parts = [self.surface, self.domain, self.stage]
-        if self.site:
-            parts.append(self.site)
-        if self.participant_id:
-            parts.append(self.participant_id)
+        if self.group:
+            parts.append(self.group)
+        if self.entity_id:
+            parts.append(self.entity_id)
         if self.stream:
             parts.append(self.stream)
         if self.artifact:

@@ -104,10 +104,22 @@ def passive_logical_labels(*, site: str = "", participant_id: str = "", stream: 
     return labels
 
 
+def passive_logical_coordinates(*, group: str = "", entity_id: str = "", stream: str = "") -> Dict[str, str]:
+    coordinates: Dict[str, str] = {}
+    if group:
+        coordinates["group"] = group
+    if entity_id:
+        coordinates["entity_id"] = entity_id
+    if stream:
+        coordinates["stream"] = stream
+    return coordinates
+
+
 __all__ = [
     "GROUP_ENTITY_STREAM_LAYOUTS",
     "PASSIVE_DATA_DOMAIN",
     "PASSIVE_DATA_LAYOUTS",
     "coverage_with_neutral_aliases",
+    "passive_logical_coordinates",
     "passive_logical_labels",
 ]

@@ -21,7 +21,12 @@ from .model import (
     file_mtime_iso,
     utc_now_iso,
 )
-from .passive_data_layout import GROUP_ENTITY_STREAM_LAYOUTS, coverage_with_neutral_aliases
+from .passive_data_layout import (
+    GROUP_ENTITY_STREAM_LAYOUTS,
+    coverage_with_neutral_aliases,
+    passive_logical_coordinates,
+    passive_logical_labels,
+)
 
 
 def git_sha() -> str:
@@ -686,6 +691,8 @@ def logical_address_for_path(relative: Path, *, logical_root: Dict[str, object],
             participant_id=participant_id,
             stream=stream,
             artifact=artifact,
+            coordinates=passive_logical_coordinates(group=site, entity_id=participant_id, stream=stream),
+            labels=passive_logical_labels(site=site, participant_id=participant_id, stream=stream),
         )
     if layout == "participant_stream_v1":
         parts = relative.parts
@@ -703,6 +710,16 @@ def logical_address_for_path(relative: Path, *, logical_root: Dict[str, object],
             participant_id=str(logical_root.get("participant_id", "")),
             stream=stream,
             artifact=artifact,
+            coordinates=passive_logical_coordinates(
+                group=str(logical_root.get("group") or logical_root.get("site", "")),
+                entity_id=str(logical_root.get("entity_id") or logical_root.get("participant_id", "")),
+                stream=stream,
+            ),
+            labels=passive_logical_labels(
+                site=str(logical_root.get("site", "")),
+                participant_id=str(logical_root.get("participant_id", "")),
+                stream=stream,
+            ),
         )
     return LogicalAddress(
         surface=str(logical_root["surface"]),

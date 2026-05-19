@@ -111,6 +111,28 @@ class ProvenancePackageBoundaryTests(unittest.TestCase):
         self.assertIs(compat_sha256_json, sha256_json)
         self.assertIs(compat_snapshot, build_dataset_snapshot)
 
+    def test_passive_provenance_addresses_emit_neutral_coordinates_with_legacy_aliases(self) -> None:
+        from mhm_core.provenance.source import logical_address_for_source
+
+        address = logical_address_for_source(
+            "group-a/entity-1/sleep/part-000.csv.gz",
+            logical_root={
+                "surface": "run-output",
+                "domain": "passive-data",
+                "stage": "merged",
+                "dataset_id": "run-1",
+            },
+            layout="site_participant_stream_v1",
+        )
+        payload = address.to_dict()
+
+        self.assertEqual(payload["group"], "group-a")
+        self.assertEqual(payload["entity_id"], "entity-1")
+        self.assertEqual(payload["site"], "group-a")
+        self.assertEqual(payload["participant_id"], "entity-1")
+        self.assertEqual(payload["coordinates"]["group"], "group-a")
+        self.assertEqual(payload["coordinates"]["entity_id"], "entity-1")
+
     def test_moved_connect_summary_paths_do_not_define_business_logic(self) -> None:
         wrapper_paths = [
             Path("connect_summary/provenance") / f"{module_name}.py"
