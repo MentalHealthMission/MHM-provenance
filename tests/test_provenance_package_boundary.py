@@ -133,6 +133,50 @@ class ProvenancePackageBoundaryTests(unittest.TestCase):
         self.assertEqual(payload["coordinates"]["group"], "group-a")
         self.assertEqual(payload["coordinates"]["entity_id"], "entity-1")
 
+    def test_source_snapshot_defaults_are_explicit_preset(self) -> None:
+        import tempfile
+
+        from mhm_core.provenance.passive_data_layout import (
+            PASSIVE_SOURCE_SNAPSHOT_PRESET,
+            SourceSnapshotPreset,
+        )
+        from mhm_core.provenance.source import snapshot_source_state
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_root = root / "source" / "group-a" / "entity-1" / "steps"
+            source_root.mkdir(parents=True)
+            (source_root / "part-000.csv").write_text("time,value\n2026-01-01,1\n", encoding="utf-8")
+
+            passive = snapshot_source_state(
+                source=str(root / "source"),
+                manifest_root=root / "passive-manifest",
+                source_id="source-passive",
+            )["snapshot"]
+
+            flat = snapshot_source_state(
+                source=str(root / "source"),
+                manifest_root=root / "flat-manifest",
+                source_id="source-flat",
+                preset=SourceSnapshotPreset(
+                    name="flat-demo-v1",
+                    surface="source",
+                    domain="demo",
+                    stage="observed",
+                    layout="flat_files_v1",
+                    fingerprint_mode="content",
+                ),
+            )["snapshot"]
+
+        self.assertEqual(passive["layout"], PASSIVE_SOURCE_SNAPSHOT_PRESET.layout)
+        self.assertEqual(passive["logical_root"]["domain"], PASSIVE_SOURCE_SNAPSHOT_PRESET.domain)
+        self.assertEqual(passive["extra_metadata"]["source_snapshot_preset"], PASSIVE_SOURCE_SNAPSHOT_PRESET.name)
+        self.assertEqual(flat["layout"], "flat_files_v1")
+        self.assertEqual(flat["fingerprint_mode"], "content")
+        self.assertEqual(flat["logical_root"]["domain"], "demo")
+        self.assertEqual(flat["logical_root"]["stage"], "observed")
+        self.assertEqual(flat["extra_metadata"]["source_snapshot_preset"], "flat-demo-v1")
+
     def test_moved_connect_summary_paths_do_not_define_business_logic(self) -> None:
         wrapper_paths = [
             Path("connect_summary/provenance") / f"{module_name}.py"

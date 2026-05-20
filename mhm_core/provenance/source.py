@@ -11,9 +11,11 @@ from .manifests import build_artifact_hash, build_parent_document_refs, write_da
 from .model import LogicalAddress, PROVENANCE_SCHEMA_VERSION, utc_now_iso
 from .passive_data_layout import (
     GROUP_ENTITY_STREAM_LAYOUTS,
+    SourceSnapshotPreset,
     coverage_with_neutral_aliases,
     passive_logical_coordinates,
     passive_logical_labels,
+    resolve_source_snapshot_preset,
 )
 
 
@@ -35,19 +37,26 @@ def snapshot_source_state(
     title: str = "",
     surface: str = "",
     domain: str = "",
-    stage: str = "captured",
-    layout: str = "raw_source_v1",
+    stage: str = "",
+    layout: str = "",
     notes: str = "",
-    fingerprint_mode: str = "metadata",
+    fingerprint_mode: str = "",
     source_dataset_manifest: str = "",
     include_relative_prefixes: Optional[Sequence[str]] = None,
     boto3_session: Optional[Any] = None,
+    preset: SourceSnapshotPreset | str | None = None,
 ) -> Dict[str, object]:
+    resolved_preset = resolve_source_snapshot_preset(preset)
+    resolved_surface = surface or resolved_preset.surface
+    resolved_domain = domain or resolved_preset.domain
+    resolved_stage = stage or resolved_preset.stage
+    resolved_layout = layout or resolved_preset.layout
+    resolved_fingerprint_mode = fingerprint_mode or resolved_preset.fingerprint_mode
     source_id_value = source_id or str(uuid.uuid4())
     logical_root = LogicalAddress(
-        surface=surface or "source",
-        domain=domain or "passive-data",
-        stage=stage or "captured",
+        surface=resolved_surface,
+        domain=resolved_domain,
+        stage=resolved_stage,
         dataset_id=source_id_value,
     ).to_dict()
     generated_at = utc_now_iso()
@@ -61,8 +70,8 @@ def snapshot_source_state(
             boto3_session.client("s3"),
             source,
             logical_root=logical_root,
-            layout=layout,
-            fingerprint_mode=fingerprint_mode,
+            layout=resolved_layout,
+            fingerprint_mode=resolved_fingerprint_mode,
             include_relative_prefixes=include_relative_prefixes,
         )
         source_binding = {
@@ -74,8 +83,8 @@ def snapshot_source_state(
         artifacts, coverage_summary = snapshot_local_source(
             source_path,
             logical_root=logical_root,
-            layout=layout,
-            fingerprint_mode=fingerprint_mode,
+            layout=resolved_layout,
+            fingerprint_mode=resolved_fingerprint_mode,
             include_relative_prefixes=include_relative_prefixes,
         )
         source_binding = {
@@ -105,8 +114,8 @@ def snapshot_source_state(
         },
         "notes": notes,
         "logical_root": logical_root,
-        "layout": layout,
-        "fingerprint_mode": fingerprint_mode,
+        "layout": resolved_layout,
+        "fingerprint_mode": resolved_fingerprint_mode,
         "parents": build_parent_document_refs([source_dataset_manifest]),
         "source_state_documents": [],
         "control_documents": [],
@@ -119,6 +128,7 @@ def snapshot_source_state(
         "extra_metadata": {
             "source_binding": source_binding,
             "source_scope_prefixes": list(_normalize_relative_prefixes(include_relative_prefixes)),
+            "source_snapshot_preset": resolved_preset.name,
             "schema_version": PROVENANCE_SCHEMA_VERSION,
         },
     }
@@ -132,7 +142,7 @@ def snapshot_source_state(
             "dataset_kind": "source_state",
             "data_root": source_binding["locator"],
             "logical_root": logical_root,
-            "layout": layout,
+            "layout": resolved_layout,
         },
     )
     return {

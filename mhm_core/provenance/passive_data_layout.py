@@ -9,6 +9,7 @@ neutral aliases for new consumers.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Dict, Iterable, Mapping, Set
 
 
@@ -28,6 +29,48 @@ GROUP_ENTITY_STREAM_LAYOUTS = frozenset(
         "site_participant_stream_v1",
     }
 )
+
+
+@dataclass(frozen=True)
+class SourceSnapshotPreset:
+    """Named defaults for adapting source-state snapshots to a data layout."""
+
+    name: str
+    surface: str
+    domain: str
+    stage: str
+    layout: str
+    fingerprint_mode: str
+
+
+PASSIVE_SOURCE_SNAPSHOT_PRESET = SourceSnapshotPreset(
+    name="passive-source-state-v1",
+    surface="source",
+    domain=PASSIVE_DATA_DOMAIN,
+    stage="captured",
+    layout="raw_source_v1",
+    fingerprint_mode="metadata",
+)
+
+SOURCE_SNAPSHOT_PRESETS: Dict[str, SourceSnapshotPreset] = {
+    PASSIVE_SOURCE_SNAPSHOT_PRESET.name: PASSIVE_SOURCE_SNAPSHOT_PRESET,
+    "passive": PASSIVE_SOURCE_SNAPSHOT_PRESET,
+    "passive-data": PASSIVE_SOURCE_SNAPSHOT_PRESET,
+}
+
+
+def resolve_source_snapshot_preset(preset: SourceSnapshotPreset | str | None) -> SourceSnapshotPreset:
+    """Resolve a source snapshot preset, preserving the passive-data default."""
+
+    if preset is None:
+        return PASSIVE_SOURCE_SNAPSHOT_PRESET
+    if isinstance(preset, SourceSnapshotPreset):
+        return preset
+    key = str(preset).strip()
+    try:
+        return SOURCE_SNAPSHOT_PRESETS[key]
+    except KeyError as exc:
+        raise ValueError(f"Unknown source snapshot preset: {preset}") from exc
 
 
 def coverage_with_neutral_aliases(
@@ -119,7 +162,11 @@ __all__ = [
     "GROUP_ENTITY_STREAM_LAYOUTS",
     "PASSIVE_DATA_DOMAIN",
     "PASSIVE_DATA_LAYOUTS",
+    "PASSIVE_SOURCE_SNAPSHOT_PRESET",
+    "SOURCE_SNAPSHOT_PRESETS",
+    "SourceSnapshotPreset",
     "coverage_with_neutral_aliases",
     "passive_logical_coordinates",
     "passive_logical_labels",
+    "resolve_source_snapshot_preset",
 ]
