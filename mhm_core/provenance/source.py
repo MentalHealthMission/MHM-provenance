@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 import uuid
 
+from .hashing import sha256_file
 from .manifests import build_artifact_hash, build_parent_document_refs, write_dataset_manifest_bundle
 from .model import LogicalAddress, PROVENANCE_SCHEMA_VERSION, utc_now_iso
 from .passive_data_layout import (
@@ -51,7 +52,11 @@ def snapshot_source_state(
     resolved_domain = domain or resolved_preset.domain
     resolved_stage = stage or resolved_preset.stage
     resolved_layout = layout or resolved_preset.layout
-    resolved_fingerprint_mode = fingerprint_mode or resolved_preset.fingerprint_mode
+    source_is_s3 = source.startswith("s3://")
+    resolved_fingerprint_mode = _validated_source_fingerprint_mode(
+        fingerprint_mode or resolved_preset.fingerprint_mode,
+        source_is_s3=source_is_s3,
+    )
     source_id_value = source_id or str(uuid.uuid4())
     logical_root = LogicalAddress(
         surface=resolved_surface,
@@ -61,7 +66,7 @@ def snapshot_source_state(
     ).to_dict()
     generated_at = utc_now_iso()
 
-    if source.startswith("s3://"):
+    if source_is_s3:
         if boto3_session is None:
             import boto3
 
@@ -243,6 +248,8 @@ def snapshot_local_source(
             "size_bytes": path.stat().st_size,
             "modified_at": modified_at,
         }
+        if fingerprint_mode == "content_sha256":
+            observed["content_sha256"] = sha256_file(path)
         record = {
             "artifact_type": "file",
             "logical_address": address.to_dict(),
@@ -282,6 +289,17 @@ def _full_s3_scan_prefixes(*, prefix: str, relative_prefixes: Sequence[str]) -> 
         if full_prefix not in scan_prefixes:
             scan_prefixes.append(full_prefix)
     return tuple(scan_prefixes)
+
+
+def _validated_source_fingerprint_mode(value: str, *, source_is_s3: bool) -> str:
+    mode = str(value or "metadata").strip() or "metadata"
+    if mode == "content":
+        raise ValueError("source-state fingerprint_mode='content' is ambiguous; use 'content_sha256' for local files or 'metadata' for S3")
+    if mode not in {"metadata", "content_sha256"}:
+        raise ValueError("source-state fingerprint_mode must be one of: metadata, content_sha256")
+    if source_is_s3 and mode == "content_sha256":
+        raise ValueError("source-state content_sha256 fingerprints require local files; use metadata for S3 snapshots")
+    return mode
 
 
 def logical_address_for_source(relative_locator: str, *, logical_root: Dict[str, object], layout: str) -> LogicalAddress:

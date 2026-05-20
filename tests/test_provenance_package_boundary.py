@@ -4,6 +4,7 @@ import json
 import ast
 import subprocess
 import sys
+import tempfile
 import textwrap
 import unittest
 from pathlib import Path
@@ -164,7 +165,7 @@ class ProvenancePackageBoundaryTests(unittest.TestCase):
                     domain="demo",
                     stage="observed",
                     layout="flat_files_v1",
-                    fingerprint_mode="content",
+                    fingerprint_mode="content_sha256",
                 ),
             )["snapshot"]
 
@@ -172,10 +173,35 @@ class ProvenancePackageBoundaryTests(unittest.TestCase):
         self.assertEqual(passive["logical_root"]["domain"], PASSIVE_SOURCE_SNAPSHOT_PRESET.domain)
         self.assertEqual(passive["extra_metadata"]["source_snapshot_preset"], PASSIVE_SOURCE_SNAPSHOT_PRESET.name)
         self.assertEqual(flat["layout"], "flat_files_v1")
-        self.assertEqual(flat["fingerprint_mode"], "content")
+        self.assertEqual(flat["fingerprint_mode"], "content_sha256")
+        self.assertIn("content_sha256", flat["artifacts"][0]["observed"])
         self.assertEqual(flat["logical_root"]["domain"], "demo")
         self.assertEqual(flat["logical_root"]["stage"], "observed")
         self.assertEqual(flat["extra_metadata"]["source_snapshot_preset"], "flat-demo-v1")
+
+    def test_source_snapshot_rejects_ambiguous_content_fingerprint_mode(self) -> None:
+        from mhm_core.provenance.passive_data_layout import SourceSnapshotPreset
+        from mhm_core.provenance.source import snapshot_source_state
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_root = root / "source"
+            source_root.mkdir()
+            (source_root / "example.csv").write_text("id,value\nentity-1,1\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "ambiguous"):
+                snapshot_source_state(
+                    source=str(source_root),
+                    manifest_root=root / "manifest",
+                    source_id="source-flat",
+                    preset=SourceSnapshotPreset(
+                        name="flat-demo-v1",
+                        surface="source",
+                        domain="demo",
+                        stage="observed",
+                        layout="flat_files_v1",
+                        fingerprint_mode="content",
+                    ),
+                )
 
     def test_moved_connect_summary_paths_do_not_define_business_logic(self) -> None:
         wrapper_paths = [
