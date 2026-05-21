@@ -872,10 +872,10 @@ def document_reference_from_path(locator: str, *, role: str, relation: str = "")
     if not text:
         return None
     path = Path(text).expanduser()
+    document_type = path.suffix.lstrip(".")
     if path.exists() and path.is_file():
         resolved_path = safe_resolve_path(path)
         document_hash = sha256_file(resolved_path)
-        document_type = path.suffix.lstrip(".")
         dataset_id = ""
         title = ""
         if path.name.endswith(".json"):
@@ -896,7 +896,7 @@ def document_reference_from_path(locator: str, *, role: str, relation: str = "")
             title=title,
             relation=relation,
         )
-    return DocumentReference(role=role, locator=text, document_hash="", relation=relation)
+    return DocumentReference(role=role, locator=text, document_hash="", document_type=document_type, relation=relation)
 
 
 def infer_logical_root(

@@ -103,6 +103,19 @@ class ProvenancePackageBoundaryTests(unittest.TestCase):
         self.assertTrue(payload["manifest_ok"])
         self.assertEqual(payload["operation_kind"], "observe")
 
+    def test_document_reference_infers_type_for_unresolved_locator(self) -> None:
+        from mhm_core.provenance.manifests import document_reference_from_path
+
+        ref = document_reference_from_path(
+            "s3://bucket/path/pipeline_spec_manifest.json",
+            role="pipeline_spec_manifest",
+        )
+
+        self.assertIsNotNone(ref)
+        payload = ref.to_dict()  # type: ignore[union-attr]
+        self.assertEqual(payload["document_type"], "json")
+        self.assertEqual(payload["locator"], "s3://bucket/path/pipeline_spec_manifest.json")
+
     def test_connect_summary_provenance_paths_are_thin_compatibility_wrappers(self) -> None:
         from connect_summary.provenance.hashing import sha256_json as compat_sha256_json
         from connect_summary.provenance.manifests import build_dataset_snapshot as compat_snapshot
