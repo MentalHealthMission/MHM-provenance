@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import ast
 import subprocess
 import sys
 import tempfile
@@ -116,15 +115,6 @@ class ProvenancePackageBoundaryTests(unittest.TestCase):
         self.assertEqual(payload["document_type"], "json")
         self.assertEqual(payload["locator"], "s3://bucket/path/pipeline_spec_manifest.json")
 
-    def test_connect_summary_provenance_paths_are_thin_compatibility_wrappers(self) -> None:
-        from connect_summary.provenance.hashing import sha256_json as compat_sha256_json
-        from connect_summary.provenance.manifests import build_dataset_snapshot as compat_snapshot
-        from mhm_core.provenance.hashing import sha256_json
-        from mhm_core.provenance.manifests import build_dataset_snapshot
-
-        self.assertIs(compat_sha256_json, sha256_json)
-        self.assertIs(compat_snapshot, build_dataset_snapshot)
-
     def test_passive_provenance_addresses_emit_neutral_coordinates_with_legacy_aliases(self) -> None:
         from mhm_core.provenance.source import logical_address_for_source
 
@@ -215,44 +205,6 @@ class ProvenancePackageBoundaryTests(unittest.TestCase):
                         fingerprint_mode="content",
                     ),
                 )
-
-    def test_moved_connect_summary_paths_do_not_define_business_logic(self) -> None:
-        wrapper_paths = [
-            Path("connect_summary/provenance") / f"{module_name}.py"
-            for module_name in (
-                "context_refs",
-                "governance",
-                "hashing",
-                "knowledge",
-                "manifests",
-                "model",
-                "operations",
-                "path_model",
-                "realization",
-                "source",
-                "source_events",
-                "surfaces",
-            )
-        ]
-        for path in wrapper_paths:
-            with self.subTest(path=str(path)):
-                tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-                logic_nodes = [
-                    node
-                    for node in ast.walk(tree)
-                    if isinstance(
-                        node,
-                        (
-                            ast.FunctionDef,
-                            ast.AsyncFunctionDef,
-                            ast.ClassDef,
-                            ast.Assign,
-                            ast.AnnAssign,
-                            ast.AugAssign,
-                        ),
-                    )
-                ]
-                self.assertEqual(logic_nodes, [])
 
 
 if __name__ == "__main__":

@@ -1,10 +1,9 @@
 """Passive-data layout helpers for provenance manifests.
 
 The generic provenance primitives can describe arbitrary files, but the first
-supported MHM dataset layout is the passive-data group/entity/stream tree. The
-legacy CONNECT names `site` and `participant_id` remain in persisted manifests
-for compatibility; this module makes that layout boundary explicit and adds
-neutral aliases for new consumers.
+supported MHM dataset layout is the passive-data group/entity/stream tree.
+Persisted manifests may also contain participant/site aliases; this module
+makes that layout boundary explicit and emits neutral keys for new consumers.
 """
 
 from __future__ import annotations
@@ -81,7 +80,7 @@ def coverage_with_neutral_aliases(
     file_count: int,
     total_bytes: int,
 ) -> Dict[str, object]:
-    """Return coverage with neutral names plus legacy CONNECT aliases."""
+    """Return coverage with neutral names plus participant/site aliases."""
 
     rendered_sites = [_normalize_site_row(row) for row in site_summary]
     rendered_groups = [_group_row_from_site_row(row) for row in rendered_sites]
@@ -91,7 +90,7 @@ def coverage_with_neutral_aliases(
         "stream_count": len(stream_ids),
         "file_count": int(file_count),
         "total_bytes": int(total_bytes),
-        # Compatibility aliases retained for existing CONNECT manifests/tests.
+        # Compatibility aliases retained for persisted participant/site manifests.
         "site_count": len(rendered_sites),
         "participant_count": len(participant_ids),
     }

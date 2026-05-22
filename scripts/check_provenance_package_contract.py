@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the rehearsed MHM provenance package import contract."""
+"""Check the MHM provenance package import contract."""
 
 from __future__ import annotations
 

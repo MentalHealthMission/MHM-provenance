@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from connect_summary.provenance.path_model import (
+from mhm_core.provenance.path_model import (
     ConcretePath,
     PathNodeReference,
     PathOperation,
@@ -13,12 +13,12 @@ from connect_summary.provenance.path_model import (
     concrete_path_from_dict,
     template_path_from_dict,
 )
-from connect_summary.provenance.realization import (
+from mhm_core.provenance.realization import (
     RealizationResult,
     RealizedBinding,
     realization_result_from_dict,
 )
-from connect_summary.provenance.surfaces import SurfaceDefinition, surface_definition_from_dict
+from mhm_core.provenance.surfaces import SurfaceDefinition, surface_definition_from_dict
 from mhm_core.provenance.model import LogicalAddress
 
 
@@ -107,7 +107,7 @@ class ProvenanceSchemaModelTests(unittest.TestCase):
             surface_id="rds_study",
             surface_kind="rds_projection",
             role="persistent_study_projection",
-            locator_rules={"root_locator": "/Volumes/CONNECT_study_data"},
+            locator_rules={"root_locator": "/data/mhm/study"},
             allowed_node_classes=["canonical_dataset", "study_slice"],
             realization_modes=["projection", "bind_existing"],
             authority_level="researcher_preferred",
@@ -139,7 +139,7 @@ class ProvenanceSchemaModelTests(unittest.TestCase):
                 RealizedBinding(
                     surface_id="rds_study",
                     binding_type="posix_path",
-                    locator="/Volumes/CONNECT_study_data/data/study/passive-data/merged-data",
+                    locator="/data/mhm/study/data/study/passive-data/merged-data",
                     verification_status="valid",
                     node_hash="n0",
                 )
