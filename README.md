@@ -1,21 +1,18 @@
 # MHM Provenance
 
-Reusable provenance primitives for Mental Health Mission data processing and
-other file-backed research workflows.
+Python tools for recording and verifying file-backed research provenance.
 
-This repository contains generic hashing, manifest, operation, binding,
-source-state, and verification primitives. It is deliberately lightweight: the
-package records what was observed, which slice or operation was applied, which
-artefacts were produced, and how those records can be verified later.
+Use this package to describe source states, processing operations, selected
+data slices, generated artefacts, and verification records.
 
-## What This Package Owns
+## What You Can Do
 
-- file and structured-data hashing
-- source-state and manifest models
-- operation and binding records
-- governance, knowledge, and context references
-- realization/path helpers for materialized artefacts
-- verification helpers for manifest bundles
+- hash files, directories, and structured records
+- write source-state and dataset manifests
+- record operations, bindings, and generated artefacts
+- attach governance, knowledge, and context references
+- resolve materialized artefact paths
+- verify manifest bundles after creation
 
 ## Install
 
