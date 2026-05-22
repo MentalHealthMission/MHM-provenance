@@ -1,10 +1,21 @@
 # MHM Provenance
 
-Reusable provenance primitives for Mental Health Mission data processing.
+Reusable provenance primitives for Mental Health Mission data processing and
+other file-backed research workflows.
 
 This repository contains generic hashing, manifest, operation, binding,
-source-state, and verification primitives. CONNECT-specific slice, issue, and
-study workflows live in CONNECT repositories.
+source-state, and verification primitives. It is deliberately lightweight: the
+package records what was observed, which slice or operation was applied, which
+artefacts were produced, and how those records can be verified later.
+
+## What This Package Owns
+
+- file and structured-data hashing
+- source-state and manifest models
+- operation and binding records
+- governance, knowledge, and context references
+- realization/path helpers for materialized artefacts
+- verification helpers for manifest bundles
 
 ## Install
 
@@ -14,6 +25,3 @@ python -m venv .venv
 pip install -e .
 python scripts/check_provenance_package_contract.py
 ```
-
-This branch was extracted from
-`connect-summary@011391223d0acaa28eb4c19ad5cd3e8f3e022d0b`.
